@@ -61,7 +61,7 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel, SchemeStatus, SchemeTagsSel, SchemeTagsNorm, SchemeInfoSel, SchemeInfoNorm }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeBar, SchemeStatus, SchemeTagsSel, SchemeTagsNorm, SchemeInfoSel, SchemeInfoNorm }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMIcon, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
@@ -240,6 +240,10 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
+static int barwinheight(void);
+static int barwinwidth(Monitor *m);
+static int barwinx(Monitor *m);
+static int barreserveheight(void);
 
 /* variables */
 static const char broken[] = "broken";
@@ -349,10 +353,10 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 		if (*y + *h + 2 * c->bw <= m->wy)
 			*y = m->wy;
 	}
-	if (*h < bh)
-		*h = bh;
-	if (*w < bh)
-		*w = bh;
+	if (*h < barwinheight())
+		*h = barwinheight();
+	if (*w < barwinheight())
+		*w = barwinheight();
 	if (resizehints || c->isfloating || !c->mon->lt[c->mon->sellt]->arrange) {
 		if (!c->hintsvalid)
 			updatesizehints(c);
@@ -409,6 +413,35 @@ arrangemon(Monitor *m)
 	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
 	if (m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
+}
+
+int
+barwinheight(void)
+{
+	return bh + barheight;
+}
+
+int
+barwinwidth(Monitor *m)
+{
+	int width;
+
+	if (!floatbar)
+		return m->ww;
+	width = m->ww - 2 * (int)barpadh;
+	return width > 1 ? width : 1;
+}
+
+int
+barwinx(Monitor *m)
+{
+	return floatbar ? m->wx + (int)barpadh : m->wx;
+}
+
+int
+barreserveheight(void)
+{
+	return barwinheight() + 2 * (int)barpadv + 2 * (int)barborder;
 }
 
 void
@@ -574,13 +607,13 @@ configurenotify(XEvent *e)
 		sw = ev->width;
 		sh = ev->height;
 		if (updategeom() || dirty) {
-			drw_resize(drw, sw, bh);
+			drw_resize(drw, sw, barwinheight());
 			updatebars();
 			for (m = mons; m; m = m->next) {
 				for (c = m->clients; c; c = c->next)
 					if (c->isfullscreen)
 						resizeclient(c, m->mx, m->my, m->mw, m->mh);
-				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
+				XMoveResizeWindow(dpy, m->barwin, barwinx(m), m->by, barwinwidth(m), barwinheight());
 			}
 			focus(NULL);
 			arrange(NULL);
@@ -1742,7 +1775,7 @@ togglebar(const Arg *arg)
 {
 	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
-	XMoveResizeWindow(dpy, selmon->barwin, selmon->wx, selmon->by, selmon->ww, bh);
+	XMoveResizeWindow(dpy, selmon->barwin, barwinx(selmon), selmon->by, barwinwidth(selmon), barwinheight());
 	arrange(selmon);
 }
 
@@ -1863,9 +1896,13 @@ updatebars(void)
 	for (m = mons; m; m = m->next) {
 		if (m->barwin)
 			continue;
-		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
+		m->barwin = XCreateWindow(dpy, root, barwinx(m), m->by, barwinwidth(m), barwinheight(), 0, DefaultDepth(dpy, screen),
 				CopyFromParent, DefaultVisual(dpy, screen),
 				CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+		if (floatbar) {
+			XSetWindowBorder(dpy, m->barwin, scheme[SchemeBar][ColBorder].pixel);
+			XSetWindowBorderWidth(dpy, m->barwin, barborder);
+		}
 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
 		XMapRaised(dpy, m->barwin);
 		XSetClassHint(dpy, m->barwin, &ch);
@@ -1877,12 +1914,23 @@ updatebarpos(Monitor *m)
 {
 	m->wy = m->my;
 	m->wh = m->mh;
-	if (m->showbar) {
-		m->wh -= bh;
+	if (!m->showbar) {
+		m->by = -barwinheight() - 2 * (int)barborder;
+		return;
+	}
+	if (floatbar) {
+		m->wh -= barreserveheight();
+		if (m->topbar) {
+			m->wy += barreserveheight();
+			m->by = m->my + (int)barpadv;
+		} else {
+			m->by = m->my + m->mh - barwinheight() - (int)barpadv - 2 * (int)barborder;
+		}
+	} else {
+		m->wh -= barwinheight();
 		m->by = m->topbar ? m->wy : m->wy + m->wh;
-		m->wy = m->topbar ? m->wy + bh : m->wy;
-	} else
-		m->by = -bh;
+		m->wy = m->topbar ? m->wy + barwinheight() : m->wy;
+	}
 }
 
 void

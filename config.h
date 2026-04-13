@@ -2,6 +2,11 @@
 
 /* appearance */
 static const unsigned int borderpx  = 5;        /* border pixel of windows */
+static const unsigned int barpadv   = 10;       /* floating bar vertical padding */
+static const unsigned int barpadh   = 200;      /* floating bar horizontal padding */
+static const unsigned int barheight = 2;        /* extra bar height beyond font height */
+static const unsigned int barborder = 2;        /* floating bar border width */
+static const unsigned int floatbar  = 1;        /* 0 docks the bar, 1 floats it */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
@@ -20,6 +25,7 @@ static const char col_muted[]    = "#4c568d"; /* muted indigo */
 static const char *colors[][3] = {
     [SchemeNorm]     = { col_fg,     col_bg,    col_bg2    },
     [SchemeSel]      = { col_fg_sel, col_accent,col_accent },
+    [SchemeBar]      = { col_fg,     col_bg,    col_accent },
     [SchemeStatus]   = { col_fg,     col_bg,    col_bg     },
     [SchemeTagsNorm] = { col_fg,     col_bg,    col_bg     },
     [SchemeTagsSel]  = { col_fg_sel, col_accent,col_accent },
