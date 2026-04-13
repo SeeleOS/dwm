@@ -1,0 +1,59 @@
+[
+  {
+    "directory": "/home/elysia/coding-project/elysia-os/packages/dwm_dev",
+    "file": "/home/elysia/coding-project/elysia-os/packages/dwm_dev/dwm.c",
+    "arguments": [
+      "cc",
+      "-c",
+      "-D_DEFAULT_SOURCE",
+      "-D_BSD_SOURCE",
+      "-D_XOPEN_SOURCE=700L",
+      "-DVERSION=\\\"6.8\\\"",
+      "-DXINERAMA",
+      "-std=c99",
+      "-pedantic",
+      "-Wall",
+      "-Wno-deprecated-declarations",
+      "-Os",
+      "dwm.c"
+    ]
+  },
+  {
+    "directory": "/home/elysia/coding-project/elysia-os/packages/dwm_dev",
+    "file": "/home/elysia/coding-project/elysia-os/packages/dwm_dev/drw.c",
+    "arguments": [
+      "cc",
+      "-c",
+      "-D_DEFAULT_SOURCE",
+      "-D_BSD_SOURCE",
+      "-D_XOPEN_SOURCE=700L",
+      "-DVERSION=\\\"6.8\\\"",
+      "-DXINERAMA",
+      "-std=c99",
+      "-pedantic",
+      "-Wall",
+      "-Wno-deprecated-declarations",
+      "-Os",
+      "drw.c"
+    ]
+  },
+  {
+    "directory": "/home/elysia/coding-project/elysia-os/packages/dwm_dev",
+    "file": "/home/elysia/coding-project/elysia-os/packages/dwm_dev/util.c",
+    "arguments": [
+      "cc",
+      "-c",
+      "-D_DEFAULT_SOURCE",
+      "-D_BSD_SOURCE",
+      "-D_XOPEN_SOURCE=700L",
+      "-DVERSION=\\\"6.8\\\"",
+      "-DXINERAMA",
+      "-std=c99",
+      "-pedantic",
+      "-Wall",
+      "-Wno-deprecated-declarations",
+      "-Os",
+      "util.c"
+    ]
+  }
+]
