@@ -240,6 +240,7 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
+static void applyroundedshape(Window win, int w, int h, int radius);
 static int barwinheight(void);
 static int barwinwidth(Monitor *m);
 static int barwinx(Monitor *m);
@@ -445,6 +446,43 @@ barreserveheight(void)
 }
 
 void
+applyroundedshape(Window win, int w, int h, int radius)
+{
+	Pixmap mask;
+	XGCValues xgcv;
+	GC shape_gc;
+	int dia;
+
+	if (radius <= 0 || !win)
+		return;
+	dia = 2 * radius;
+	if (w < dia || h < dia)
+		return;
+
+	mask = XCreatePixmap(dpy, win, w, h, 1);
+	if (!mask)
+		return;
+	shape_gc = XCreateGC(dpy, mask, 0, &xgcv);
+	if (!shape_gc) {
+		XFreePixmap(dpy, mask);
+		return;
+	}
+
+	XSetForeground(dpy, shape_gc, 0);
+	XFillRectangle(dpy, mask, shape_gc, 0, 0, w, h);
+	XSetForeground(dpy, shape_gc, 1);
+	XFillArc(dpy, mask, shape_gc, 0, 0, dia, dia, 0, 23040);
+	XFillArc(dpy, mask, shape_gc, w - dia - 1, 0, dia, dia, 0, 23040);
+	XFillArc(dpy, mask, shape_gc, 0, h - dia - 1, dia, dia, 0, 23040);
+	XFillArc(dpy, mask, shape_gc, w - dia - 1, h - dia - 1, dia, dia, 0, 23040);
+	XFillRectangle(dpy, mask, shape_gc, radius, 0, w - dia, h);
+	XFillRectangle(dpy, mask, shape_gc, 0, radius, w, h - dia);
+	XShapeCombineMask(dpy, win, ShapeBounding, 0, 0, mask, ShapeSet);
+	XFreePixmap(dpy, mask);
+	XFreeGC(dpy, shape_gc);
+}
+
+void
 attach(Client *c)
 {
 	c->next = c->mon->clients;
@@ -614,6 +652,8 @@ configurenotify(XEvent *e)
 					if (c->isfullscreen)
 						resizeclient(c, m->mx, m->my, m->mw, m->mh);
 				XMoveResizeWindow(dpy, m->barwin, barwinx(m), m->by, barwinwidth(m), barwinheight());
+				if (floatbar)
+					applyroundedshape(m->barwin, barwinwidth(m), barwinheight(), CORNER_RADIUS);
 			}
 			focus(NULL);
 			arrange(NULL);
@@ -1424,43 +1464,7 @@ drawroundedcorners(Client *c)
 	if (CORNER_RADIUS < 0)
 		return;
 	if (CORNER_RADIUS > 0 && c && !c->isfullscreen) {
-		Window win = c->win;
-		XWindowAttributes win_attr;
-		int dia = 2 * CORNER_RADIUS;
-		int w = WIDTH(c);
-		int h = HEIGHT(c);
-		Pixmap mask;
-		XGCValues xgcv;
-		GC shape_gc;
-
-		if (!win)
-			return;
-		if (!XGetWindowAttributes(dpy, win, &win_attr))
-			return;
-		if (w < dia || h < dia)
-			return;
-
-		mask = XCreatePixmap(dpy, win, w, h, 1);
-		if (!mask)
-			return;
-		shape_gc = XCreateGC(dpy, mask, 0, &xgcv);
-		if (!shape_gc) {
-			XFreePixmap(dpy, mask);
-			return;
-		}
-
-		XSetForeground(dpy, shape_gc, 0);
-		XFillRectangle(dpy, mask, shape_gc, 0, 0, w, h);
-		XSetForeground(dpy, shape_gc, 1);
-		XFillArc(dpy, mask, shape_gc, 0, 0, dia, dia, 0, 23040);
-		XFillArc(dpy, mask, shape_gc, w - dia - 1, 0, dia, dia, 0, 23040);
-		XFillArc(dpy, mask, shape_gc, 0, h - dia - 1, dia, dia, 0, 23040);
-		XFillArc(dpy, mask, shape_gc, w - dia - 1, h - dia - 1, dia, dia, 0, 23040);
-		XFillRectangle(dpy, mask, shape_gc, CORNER_RADIUS, 0, w - dia, h);
-		XFillRectangle(dpy, mask, shape_gc, 0, CORNER_RADIUS, w, h - dia);
-		XShapeCombineMask(dpy, win, ShapeBounding, 0, 0, mask, ShapeSet);
-		XFreePixmap(dpy, mask);
-		XFreeGC(dpy, shape_gc);
+		applyroundedshape(c->win, WIDTH(c), HEIGHT(c), CORNER_RADIUS);
 	}
 }
 
@@ -1776,6 +1780,8 @@ togglebar(const Arg *arg)
 	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
 	XMoveResizeWindow(dpy, selmon->barwin, barwinx(selmon), selmon->by, barwinwidth(selmon), barwinheight());
+	if (floatbar)
+		applyroundedshape(selmon->barwin, barwinwidth(selmon), barwinheight(), CORNER_RADIUS);
 	arrange(selmon);
 }
 
@@ -1902,6 +1908,7 @@ updatebars(void)
 		if (floatbar) {
 			XSetWindowBorder(dpy, m->barwin, scheme[SchemeBar][ColBorder].pixel);
 			XSetWindowBorderWidth(dpy, m->barwin, barborder);
+			applyroundedshape(m->barwin, barwinwidth(m), barwinheight(), CORNER_RADIUS);
 		}
 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
 		XMapRaised(dpy, m->barwin);
