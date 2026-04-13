@@ -10,12 +10,12 @@ static const int topbar             = 1;        /* 0 means bottom bar */
 static const int CORNER_RADIUS      = 10;
 static const char *fonts[]          = { "monospace:size=13" };
 static const char dmenufont[]       = "monospace:size=13";
-static const char col_bg[]       = "#1e2233";
-static const char col_bg2[]      = "#2d3348";
-static const char col_fg[]       = "#a4cef4";
-static const char col_fg_sel[]   = "#edeff6";
-static const char col_accent[]   = "#6c8dd4";
-static const char col_muted[]    = "#4c568d";
+static const char col_bg[]       = "#1e2233"; /* deep ink blue */
+static const char col_bg2[]      = "#2d3348"; /* slate blue-gray */
+static const char col_fg[]       = "#a4cef4"; /* soft sky blue */
+static const char col_fg_sel[]   = "#edeff6"; /* cloud white */
+static const char col_accent[]   = "#6c8dd4"; /* dusty ocean blue */
+static const char col_muted[]    = "#4c568d"; /* muted indigo */
 
 static const char *colors[][3] = {
     [SchemeNorm]     = { col_fg,     col_bg,    col_bg2    },
